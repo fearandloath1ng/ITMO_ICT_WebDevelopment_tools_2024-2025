@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://fearandloath1ng.github.io/ITMO_ICT_WebDevelopment_tools_2024-2025/lab2/lab2/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Parsing - Web Lab Docs</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Parsing";
+        var mkdocs_page_input_path = "lab2/lab2.md";
+        var mkdocs_page_url = "/ITMO_ICT_WebDevelopment_tools_2024-2025/lab2/lab2/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Web Lab Docs
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">lab1</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../lab1/lab1/">FastAPI app</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">lab2</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Parsing</a>
+    <ul class="current">
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">lab3</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../lab3/lab3/">Docker</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Web Lab Docs</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">lab2</li>
+      <li class="breadcrumb-item active">Parsing</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/fearandloath1ng/ITMO_ICT_WebDevelopment_tools_2024-2025/edit/master/docs/lab2/lab2.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="no2">Лабораторная работа №2</h2>
+<h1 id="_1">Цель</h1>
+<p>Создать три программы на Python для параллельного парсинга множества веб-страниц с 
+использованием подходов threading, multiprocessing и async. Все собранные данные должны 
+быть сохранены в базу данных.</p>
+<h1 id="no1">Задание №1</h1>
+<ol>
+<li>Threading</li>
+</ol>
+<pre><code class="language-python">import time
+import threading
+
+def calculate_partial_sum(start, end):
+    return end * (end + 1) // 2 - (start - 1) * start // 2
+
+N = 10000000000000
+NUM_THREADS = 4
+chunk_size = N // NUM_THREADS
+
+start_time = time.time()
+
+threads = []
+results = [0] * NUM_THREADS
+
+for i in range(NUM_THREADS):
+    start = i * chunk_size + 1
+    end = (i + 1) * chunk_size if i &lt; NUM_THREADS - 1 else N
+    def target(idx, s, e):
+        results[idx] = calculate_partial_sum(s, e)
+    thread = threading.Thread(target=target, args=(i, start, end))
+    threads.append(thread)
+    thread.start()
+
+for thread in threads:
+    thread.join()
+
+total_sum = sum(results)
+
+end_time = time.time()
+print(f&quot;Threading sum: {total_sum}&quot;)
+print(f&quot;Threading time: {end_time - start_time} seconds&quot;)
+</code></pre>
+<p>Вывод:</p>
+<p><img alt="Photo" src="../111.png" /></p>
+<ol>
+<li>Multiprocessing</li>
+</ol>
+<pre><code class="language-python">import time
+from multiprocessing import Process, Manager
+
+def calculate_partial_sum(start, end):
+    return end * (end + 1) // 2 - (start - 1) * start // 2
+
+def target(idx, s, e, results):
+    results[idx] = calculate_partial_sum(s, e)
+
+if __name__ == '__main__':
+    N = 10000000000000  
+    NUM_PROCESSES = 4   
+    chunk_size = N // NUM_PROCESSES  
+
+    start_time = time.time()
+
+    manager = Manager()
+    results = manager.list([0] * NUM_PROCESSES)
+
+    processes = []
+    for i in range(NUM_PROCESSES):
+        start = i * chunk_size + 1
+        end = (i + 1) * chunk_size if i &lt; NUM_PROCESSES - 1 else N
+        process = Process(target=target, args=(i, start, end, results))
+        processes.append(process)
+        process.start()
+
+    for process in processes:
+        process.join()
+
+    total_sum = sum(results)
+
+    end_time = time.time()
+    print(f&quot;Multiprocessing sum: {total_sum}&quot;)
+    print(f&quot;Multiprocessing time: {end_time - start_time} seconds&quot;)
+</code></pre>
+<p>Вывод:</p>
+<p><img alt="Photo" src="../222.png" /></p>
+<ol>
+<li>Async</li>
+</ol>
+<pre><code class="language-python">import time
+import asyncio
+
+def calculate_partial_sum(start, end):
+    return end * (end + 1) // 2 - (start - 1) * start // 2
+
+async def async_calculate_partial_sum(start, end):
+    return calculate_partial_sum(start, end)
+
+N = 10000000000000
+NUM_TASKS = 4
+chunk_size = N // NUM_TASKS
+
+async def main():
+    start_time = time.time()
+
+    tasks = []
+    for i in range(NUM_TASKS):
+        start = i * chunk_size + 1
+        end = (i + 1) * chunk_size if i &lt; NUM_TASKS - 1 else N
+        task = async_calculate_partial_sum(start, end)
+        tasks.append(task)
+
+    results = await asyncio.gather(*tasks)
+
+    total_sum = sum(results)
+
+    end_time = time.time()
+    print(f&quot;Async sum: {total_sum}&quot;)
+    print(f&quot;Async time: {end_time - start_time} seconds&quot;)
+
+asyncio.run(main())
+</code></pre>
+<p>Вывод:</p>
+<p><img alt="Photo" src="../333.png" /></p>
+<h1 id="no2_1">Задание №2</h1>
+<ol>
+<li>Threading</li>
+</ol>
+<p>Вывод:</p>
+<p><img alt="Photo" src="../444.png" /></p>
+<ol>
+<li>Multiprocessing</li>
+</ol>
+<p>Вывод:</p>
+<p><img alt="Photo" src="../555.png" /></p>
+<ol>
+<li>Async</li>
+</ol>
+<p>Вывод:</p>
+<p><img alt="Photo" src="../666.png" /></p>
+<h1 id="_2">Результаты</h1>
+<table>
+<thead>
+<tr>
+<th>Подход</th>
+<th>Время 1</th>
+<th>Время 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Threading</td>
+<td>0.000198 сек</td>
+<td>1.32 сек</td>
+</tr>
+<tr>
+<td>Multiprocessing</td>
+<td>0.128238 сек</td>
+<td>4.09 сек</td>
+</tr>
+<tr>
+<td>Async</td>
+<td>0.000086 сек</td>
+<td>1.34 сек</td>
+</tr>
+</tbody>
+</table>
+<h1 id="_3">Выводы</h1>
+<p>В ходе выполнения лабораторной работы были реализованы три подхода к параллельному парсингу:</p>
+<ul>
+<li>Threading - подходит для задач, требующих большого количества операций ввода-вывода, но GIL ограничивает эффективность.</li>
+<li>Multiprocessing - обеспечивает наилучшие результаты для CPU-bound задач, так как каждый процесс работает отдельно.</li>
+<li>Async - хорошо подходит для асинхронных операций ввода-вывода, таких как HTTP-запросы, но зависит от количества ожидающих операций.</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../lab1/lab1/" class="btn btn-neutral float-left" title="FastAPI app"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../lab3/lab3/" class="btn btn-neutral float-right" title="Docker">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/fearandloath1ng/ITMO_ICT_WebDevelopment_tools_2024-2025" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../../lab1/lab1/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../lab3/lab3/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

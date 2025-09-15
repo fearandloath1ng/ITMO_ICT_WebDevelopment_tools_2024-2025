@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://fearandloath1ng.github.io/ITMO_ICT_WebDevelopment_tools_2024-2025/lab3/lab3/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Docker - Web Lab Docs</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Docker";
+        var mkdocs_page_input_path = "lab3/lab3.md";
+        var mkdocs_page_url = "/ITMO_ICT_WebDevelopment_tools_2024-2025/lab3/lab3/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Web Lab Docs
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">lab1</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../lab1/lab1/">FastAPI app</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">lab2</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../lab2/lab2/">Parsing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">lab3</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Docker</a>
+    <ul class="current">
+    </ul>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Web Lab Docs</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">lab3</li>
+      <li class="breadcrumb-item active">Docker</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/fearandloath1ng/ITMO_ICT_WebDevelopment_tools_2024-2025/edit/master/docs/lab3/lab3.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="no3">Лабораторная работа №3.</h2>
+<h1 id="_1">Цель</h1>
+<p>Научиться упаковывать FastAPI приложение в Docker, интегрировать парсер данных с базой
+данных и вызывать парсер через API и очередь.</p>
+<h1 id="_2">Ход работы</h1>
+<ol>
+<li>Установим зависимости</li>
+</ol>
+<pre><code class="language-bash">pip install celery redis requests beautifulsoup4 aiohttp
+</code></pre>
+<ol>
+<li>Парсер как отдельный сервис</li>
+</ol>
+<pre><code class="language-python">from fastapi import FastAPI, HTTPException
+import asyncio
+import aiohttp
+from bs4 import BeautifulSoup
+from typing import List
+
+app = FastAPI(title=&quot;Parser Service&quot;)
+
+async def parse_url(url: str) -&gt; str:
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=5) as response:
+                text = await response.text()
+                soup = BeautifulSoup(text, 'html.parser')
+                title = soup.title.string.strip() if soup.title else &quot;No title&quot;
+                return title
+    except aiohttp.ClientError as e:
+        raise HTTPException(status_code=500, detail=f&quot;Error parsing {url}: {e}&quot;)
+
+@app.post(&quot;/parse&quot;, response_model=List[dict])
+async def parse_urls(urls: List[str]):
+    tasks = [parse_url(url) for url in urls]
+    titles = await asyncio.gather(*tasks, return_exceptions=True)
+    results = [{&quot;url&quot;: urls[i], &quot;title&quot;: titles[i] if not isinstance(titles[i], Exception) else str(titles[i])} for i in range(len(urls))]
+    return results
+</code></pre>
+<ol>
+<li>
+<p>Создайем <code>requirements.txt</code></p>
+</li>
+<li>
+<p>Разрабатываем докерфайлы для приложения и парсера</p>
+</li>
+<li>
+<p>Создаем Docker Compose файла</p>
+</li>
+</ol>
+<pre><code class="language-yaml">services:
+  db:
+    image: postgres:13  
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_password  
+      POSTGRES_DB: time_manager_db
+    ports:
+      - &quot;5432:5432&quot;
+    volumes:
+      - db_data:/var/lib/postgresql/data  
+
+  fastapi:
+    build: . 
+    ports:
+      - &quot;8000:8000&quot;
+    environment:
+      DATABASE_URL: postgresql://postgres:your_password@db/time_manager_db  
+      SECRET_KEY: your_random_secret_key  
+    depends_on:
+      - db  
+    command: [&quot;uvicorn&quot;, &quot;main:app&quot;, &quot;--host&quot;, &quot;0.0.0.0&quot;, &quot;--port&quot;, &quot;8000&quot;]
+
+  parser:
+    build: ./task2  
+    ports:
+      - &quot;8001:8001&quot;
+    command: [&quot;uvicorn&quot;, &quot;parser_app:app&quot;, &quot;--host&quot;, &quot;0.0.0.0&quot;, &quot;--port&quot;, &quot;8001&quot;]
+
+  redis:
+    image: redis:6  
+    ports:
+      - &quot;6379:6379&quot;
+
+  celery_worker:
+    build: . 
+    command: celery -A celery_app worker --loglevel=info
+    environment:
+      DATABASE_URL: postgresql://postgres:your_password@db/time_manager_db
+      CELERY_BROKER_URL: redis://redis:6379/0  
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+      - parser  
+
+volumes:
+  db_data:
+</code></pre>
+<ol>
+<li>Интегрируем Celery и создаем задачи</li>
+</ol>
+<pre><code class="language-python">from celery_app import app
+import requests
+from app.crud.tasks import create_task
+from app.schemas import TaskCreate
+from app.connection import get_session
+
+@app.task
+def parse_and_save_task(url: str, user_id: int):
+    try:
+        parser_url = &quot;http://parser:8001/parse&quot;  
+        response = requests.post(parser_url, json=[url])
+        response.raise_for_status()
+        results = response.json()
+        title = results[0]['title'] if results else &quot;No title&quot;
+
+        with get_session() as session:
+            task = TaskCreate(title=title, description=url)
+            create_task(session, task, user_id)
+        return {&quot;status&quot;: &quot;success&quot;, &quot;url&quot;: url, &quot;title&quot;: title}
+    except Exception as e:
+        return {&quot;status&quot;: &quot;error&quot;, &quot;message&quot;: str(e)}
+</code></pre>
+<ol>
+<li>Добавляем эндпоинт для вызова парсера</li>
+</ol>
+<pre><code class="language-python">@router.post(&quot;/parse&quot;)
+def parse_url(url: str, current_user: User = Depends(get_current_user)):
+    task = parse_and_save_task.delay(url, current_user.id)
+    return {&quot;task_id&quot;: task.id, &quot;message&quot;: &quot;Parsing started asynchronously&quot;}
+</code></pre>
+<ol>
+<li>Запускаем и тестируем</li>
+</ol>
+<h1 id="_3">Выводы</h1>
+<p>В ходе этой лабораторной работы я научился работать с докером и обрабатывать многопоточные запросы с приложения.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../lab2/lab2/" class="btn btn-neutral float-left" title="Parsing"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/fearandloath1ng/ITMO_ICT_WebDevelopment_tools_2024-2025" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../../lab2/lab2/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://fearandloath1ng.github.io/ITMO_ICT_WebDevelopment_tools_2024-2025/lab1/lab1/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>FastAPI app - Web Lab Docs</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "FastAPI app";
+        var mkdocs_page_input_path = "lab1/lab1.md";
+        var mkdocs_page_url = "/ITMO_ICT_WebDevelopment_tools_2024-2025/lab1/lab1/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Web Lab Docs
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">lab1</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">FastAPI app</a>
+    <ul class="current">
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">lab2</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../lab2/lab2/">Parsing</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">lab3</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../lab3/lab3/">Docker</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Web Lab Docs</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">lab1</li>
+      <li class="breadcrumb-item active">FastAPI app</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/fearandloath1ng/ITMO_ICT_WebDevelopment_tools_2024-2025/edit/master/docs/lab1/lab1.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="no1">Лабораторная работа №1</h2>
+<h1 id="_1">Цель работы</h1>
+<p>Научиться реализовывать полноценное серверное приложение с использованием фреймворка 
+FastAPI, включая работу с базой данных, аутентификацию пользователей и построение сложных 
+связей между сущностями.</p>
+<h1 id="_2">Тема</h1>
+<p>Приложения для тайм менеджмента</p>
+<h1 id="_3">Стек технологий</h1>
+<ul>
+<li>FastAPI (фреймворк)</li>
+<li>PosgreSQL (БД)</li>
+<li>Alembic (миграции)</li>
+<li>uvicorn (запуск сервера)</li>
+</ul>
+<h1 id="_4">Ход работы</h1>
+<ol>
+<li>
+<p>Устанавливаем нужные библиотеки</p>
+</li>
+<li>
+<p>Создаем структуру проекта</p>
+</li>
+<li>
+<p>Реализуем модели:</p>
+</li>
+</ol>
+<pre><code class="language-python">from typing import Optional, List
+from sqlmodel import SQLModel, Field, Relationship
+from datetime import datetime
+
+class User(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    username: str = Field(index=True, unique=True)
+    email: str = Field(index=True, unique=True)
+    hashed_password: str
+    tasks: List[&quot;Task&quot;] = Relationship(back_populates=&quot;user&quot;)
+    schedules: List[&quot;Schedule&quot;] = Relationship(back_populates=&quot;user&quot;)
+
+class Task(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str
+    description: Optional[str] = None
+    deadline: Optional[datetime] = None
+    priority: int = Field(default=1)
+    user_id: Optional[int] = Field(default=None, foreign_key=&quot;user.id&quot;)
+    user: Optional[User] = Relationship(back_populates=&quot;tasks&quot;)
+    categories: List[&quot;Category&quot;] = Relationship(back_populates=&quot;tasks&quot;, link_model=&quot;TaskCategory&quot;)
+    time_logs: List[&quot;TimeLog&quot;] = Relationship(back_populates=&quot;task&quot;)
+
+class Category(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(unique=True)
+    tasks: List[Task] = Relationship(back_populates=&quot;categories&quot;, link_model=&quot;TaskCategory&quot;)
+
+class TaskCategory(SQLModel, table=True):
+    task_id: Optional[int] = Field(default=None, foreign_key=&quot;task.id&quot;, primary_key=True)
+    category_id: Optional[int] = Field(default=None, foreign_key=&quot;category.id&quot;, primary_key=True)
+    association_priority: int = Field(default=1)
+
+class TimeLog(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    task_id: Optional[int] = Field(default=None, foreign_key=&quot;task.id&quot;)
+    start_time: datetime
+    end_time: Optional[datetime] = None
+    duration: Optional[int] = None 
+    task: Optional[Task] = Relationship(back_populates=&quot;time_logs&quot;)
+
+class Schedule(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: Optional[int] = Field(default=None, foreign_key=&quot;user.id&quot;)
+    date: datetime
+    description: Optional[str] = None
+    user: Optional[User] = Relationship(back_populates=&quot;schedules&quot;)
+</code></pre>
+<ul>
+<li>Users (пользователи)</li>
+<li>Tasks (задачи, one-to-many с Users и many-to-many с Categories)</li>
+<li>Categories (категории)</li>
+<li>TaskCategories (ассоциативная таблица с extra полем association_priority)</li>
+<li>TimeLogs (логи времени, one-to-many с Tasks)</li>
+<li>
+<p>Schedules (расписания, one-to-many с Users)</p>
+</li>
+<li>
+<p>В <code>schemas.py</code> создаем Pydantic-схемы для валидации</p>
+</li>
+<li>
+<p>Настраиваем соединения с БД и миграций</p>
+</li>
+</ul>
+<pre><code class="language-python">from sqlmodel import SQLModel, create_engine, Session
+from sqlalchemy.ext.asyncio import AsyncEngine
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DATABASE_URL = os.getenv(&quot;DATABASE_URL&quot;)
+
+engine = create_engine(DATABASE_URL, echo=True)
+
+def init_db():
+    SQLModel.metadata.create_all(engine)
+
+def get_session():
+    with Session(engine) as session:
+        yield session
+</code></pre>
+<ol>
+<li>
+<p>Инициализируем Alembic и создаем миграции</p>
+</li>
+<li>
+<p>Реализуем CRUD и роутеры</p>
+</li>
+<li>
+<p>Реализуем авторизацию</p>
+</li>
+</ol>
+<pre><code class="language-python">from passlib.context import CryptContext
+from datetime import datetime, timedelta
+from jose import JWTError, jwt
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+pwd_context = CryptContext(schemes=[&quot;bcrypt&quot;], deprecated=&quot;auto&quot;)
+SECRET_KEY = os.getenv(&quot;SECRET_KEY&quot;)
+ALGORITHM = &quot;HS256&quot;
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({&quot;exp&quot;: expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+</code></pre>
+<ol>
+<li>
+<p>Запускаем <code>uvicorn main:app --reload</code></p>
+</li>
+<li>
+<p>Тестируем с помощью Swagger</p>
+</li>
+</ol>
+<h1 id="_5">Вывод</h1>
+<p>В рамках данной работы реализовано серверное приложение на FastAPI для тайм-менеджмента.
+Спроектирована и реализована реляционная БД PostgreSQL. Внедрена аутентификация по JWT-токенам.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../.." class="btn btn-neutral float-left" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../lab2/lab2/" class="btn btn-neutral float-right" title="Parsing">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/fearandloath1ng/ITMO_ICT_WebDevelopment_tools_2024-2025" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../.." style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../lab2/lab2/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
